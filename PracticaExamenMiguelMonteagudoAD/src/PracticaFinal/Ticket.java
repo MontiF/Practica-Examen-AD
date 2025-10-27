@@ -12,7 +12,7 @@ public class Ticket extends Empleado{
 	
 	
 	public Ticket(int numeroTicket, int idEmpleado, String nombreEmpleado, LocalDate fecha, ArrayList<LineaVenta> lineas, float total) {
-		super(idEmpleado, nombreEmpleado, nombreEmpleado, nombreEmpleado);
+		super(idEmpleado, nombreEmpleado);
 		this.numeroTicket = numeroTicket;
 		this.fecha = fecha;
 		this.lineas = lineas;

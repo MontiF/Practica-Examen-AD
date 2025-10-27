@@ -1,17 +1,26 @@
 package PracticaFinal;
-
 import java.io.*;
+
+enum Cargo {GESTOR, VENDEDOR};
 
 public class Empleado implements Serializable {
 	private int id;
-	private String nombre, password, cargo;
+	private String nombre, password;
+	private Cargo cargo;
 	
-	public Empleado(int id, String nombre, String password, String cargo) {
+	public Empleado(int id, String nombre, String password, Cargo cargo) {
 		this.id = id;
 		this.nombre = nombre;
 		this.password = password;
 		this.cargo = cargo;
 	}
+
+	public Empleado(int id, String nombre) {
+		super();
+		this.id = id;
+		this.nombre = nombre;
+	}
+
 
 	public int getId() {
 		return id;
@@ -37,11 +46,11 @@ public class Empleado implements Serializable {
 		this.password = contra;
 	}
 
-	public String getCargo() {
+	public Cargo getCargo() {
 		return cargo;
 	}
 
-	public void setCargo(String cargo) {
+	public void setCargo(Cargo cargo) {
 		this.cargo = cargo;
 	}
 
