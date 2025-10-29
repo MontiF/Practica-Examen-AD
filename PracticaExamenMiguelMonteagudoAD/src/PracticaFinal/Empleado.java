@@ -4,12 +4,12 @@ import java.io.*;
 enum Cargo {GESTOR, VENDEDOR};
 
 public class Empleado implements Serializable {
-	private int id;
+	private int identificacion;
 	private String nombre, password;
 	private Cargo cargo;
 	
-	public Empleado(int id, String nombre, String password, Cargo cargo) {
-		this.id = id;
+	public Empleado(int identificacion, String nombre, String password, Cargo cargo) {
+		this.identificacion = identificacion;
 		this.nombre = nombre;
 		this.password = password;
 		this.cargo = cargo;
@@ -17,17 +17,17 @@ public class Empleado implements Serializable {
 
 	public Empleado(int id, String nombre) {
 		super();
-		this.id = id;
+		this.identificacion = id;
 		this.nombre = nombre;
 	}
 
 
 	public int getId() {
-		return id;
+		return identificacion;
 	}
 
 	public void setId(int id) {
-		this.id = id;
+		this.identificacion = id;
 	}
 
 	public String getNombre() {
@@ -56,7 +56,7 @@ public class Empleado implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Empleado [id=" + id + ", nombre=" + nombre + ", password=" + password + ", cargo=" + cargo + "]";
+		return "Empleado [identificacion=" + identificacion + ", nombre=" + nombre + ", password=" + password + ", cargo=" + cargo + "]";
 	}
 	
 	
