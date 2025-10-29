@@ -38,12 +38,12 @@ public class Empleado implements Serializable {
 		this.nombre = nombre;
 	}
 
-	public String getContra() {
+	public String getPassword() {
 		return password;
 	}
 
-	public void setContra(String contra) {
-		this.password = contra;
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	public Cargo getCargo() {
@@ -58,6 +58,8 @@ public class Empleado implements Serializable {
 	public String toString() {
 		return "Empleado [identificacion=" + identificacion + ", nombre=" + nombre + ", password=" + password + ", cargo=" + cargo + "]";
 	}
+
+
 	
 	
 	

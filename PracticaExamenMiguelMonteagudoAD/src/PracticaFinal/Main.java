@@ -177,13 +177,33 @@ public class Main {
 			}
 		}
 	}
-	public static void iniciarSesion() {
+	public static void iniciarSesion() {	
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Introduce tu número de identificación de empleado");
 		int identificacion = sc.nextInt();
 		System.out.println("Escribe la contraseña");
+		sc.nextLine();
 		String password = sc.nextLine();
 		
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("EMPLEADOS/empleado.dat"))) {
+		    for(Empleado e : ){
+		        try {
+		            Object obj = ois.readObject();
+		            if (obj instanceof Empleado) {
+		                if (e.getId() == identificacion && e.getPassword().equals(password)) {
+		                	System.out.println("Inicio correcto");
+		                	break;
+		                }
+		            }
+		        } catch (EOFException | ClassNotFoundException eof) {
+		            System.out.println("Identificacion o contraseña incorrecta");
+		        	break;
+		        }
+		    }
+		}catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
 		
 	}
 }
