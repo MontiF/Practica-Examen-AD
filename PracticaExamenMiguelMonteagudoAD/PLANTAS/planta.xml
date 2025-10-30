@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plantas>
+    <planta>
+        <codigo>1</codigo>
+        <nombre>Cactus</nombre>
+        <foto>cactus.jpg</foto>
+        <descripcion>Planta suculenta del desierto.</descripcion>
+    </planta>
+</plantas>

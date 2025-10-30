@@ -1,14 +1,34 @@
- package PracticaFinal;
+package PracticaFinal;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
 public class Main {
+
+	private static ArrayList<Empleado> ListaEmpleados = new ArrayList<Empleado>();
 	
 	public static void main(String[] args) {
 		crearEstructuraCarpetas();
-		iniciarSesion();
+		Cargo cargoIniciado = iniciarSesion();
+		if(cargoIniciado == Cargo.GESTOR){
+			System.out.println("Menu de Gestor");
+			menuGestor();
+		}else if(cargoIniciado == Cargo.VENDEDOR) {
+			System.out.println("Menu de Vendedor");
+			menuVendedor();
+		}else {
+			System.out.println("Inicio de sesion fallido");
+		}
+	}
+
+	private static void menuVendedor() {
+		Scanner sc = new Scanner(System.in);
+		
+	}
+
+	private static void menuGestor() {
 		
 	}
 
@@ -71,59 +91,21 @@ public class Main {
 		}
 	}
 	public static void escribirEmpleadospredeterminados(){
-		ArrayList <Empleado> ListaEmpleados = new ArrayList <>();
 		File rutaEmpleadosDat = new File("EMPLEADOS/empleado.dat");
 		if(rutaEmpleadosDat.exists()) {
 			if(rutaEmpleadosDat.length() == 0) {
-				try (FileOutputStream FicheroEscritura = new FileOutputStream("EMPLEADOS/empleado.dat");
-			             ObjectOutputStream escritura = new ObjectOutputStream(FicheroEscritura)) {
-
-			            	            
-			            Empleado empleado1 = new Empleado(1452,"Teresa","asb123",Cargo.VENDEDOR);
-			            Empleado empleado2 = new Empleado(0234,"Miguel Angel","123qwe",Cargo.VENDEDOR);
-			            Empleado empleado3 = new Empleado(7532,"Natalia","xs21qw4", Cargo.GESTOR);
-			            
-			            ListaEmpleados.add(empleado1);
-			            ListaEmpleados.add(empleado2);
-			            ListaEmpleados.add(empleado3);
-			            
-			            escritura.writeObject(ListaEmpleados);
-			            
-
-			            System.out.println("Objetos escritos correctamente en empleado.dat");
-
-			        } catch (IOException i) {
-			            i.printStackTrace();
-			        }
+				generarEmpleados();
 			}
 		}else {
 			try {
 				rutaEmpleadosDat.createNewFile();
-				System.out.println("Empleados.dat creado correctamente");
-				try (FileOutputStream FicheroEscritura = new FileOutputStream("EMPLEADOS/empleado.dat");
-			             ObjectOutputStream escritura = new ObjectOutputStream(FicheroEscritura)) {
-
-			            	            
-			            Empleado empleado1 = new Empleado(1452,"Teresa","asb123",Cargo.VENDEDOR);
-			            Empleado empleado2 = new Empleado(0234,"Miguel Angel","123qwe",Cargo.VENDEDOR);
-			            Empleado empleado3 = new Empleado(7532,"Natalia","xs21qw4", Cargo.GESTOR);
-			            
-			            ListaEmpleados.add(empleado1);
-			            ListaEmpleados.add(empleado2);
-			            ListaEmpleados.add(empleado3);
-			            
-			            escritura.writeObject(ListaEmpleados);
-			            
-
-			            System.out.println("Objetos escritos correctamente en empleado.dat");
-
-			        } catch (IOException i) {
-			            i.printStackTrace();
-			        }
+				generarEmpleados();
+				System.out.println("Empleado.dat creado correctamente");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		cargarEmpleados();
 
 	}
 	public static void crearPlantasDat(){
@@ -177,33 +159,67 @@ public class Main {
 			}
 		}
 	}
-	public static void iniciarSesion() {	
+	
+	public static void cargarEmpleados() {
+	    File rutaEmpleadosDat = new File("EMPLEADOS/empleado.dat");
+	    if (rutaEmpleadosDat.exists() && rutaEmpleadosDat.length() > 0) {
+	        try (FileInputStream fis = new FileInputStream(rutaEmpleadosDat);
+	             ObjectInputStream ois = new ObjectInputStream(fis)) {
+	            
+	            ListaEmpleados = (ArrayList<Empleado>) ois.readObject();
+	            
+	        } catch (IOException | ClassNotFoundException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
+
+	public static Cargo iniciarSesion() {	
+		verEmpleados();
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Introduce tu número de identificación de empleado");
 		int identificacion = sc.nextInt();
-		System.out.println("Escribe la contraseña");
+		System.out.println("Introduce la contraseña");
 		sc.nextLine();
 		String password = sc.nextLine();
 		
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("EMPLEADOS/empleado.dat"))) {
-		    for(Empleado e : ){
-		        try {
-		            Object obj = ois.readObject();
-		            if (obj instanceof Empleado) {
-		                if (e.getId() == identificacion && e.getPassword().equals(password)) {
-		                	System.out.println("Inicio correcto");
-		                	break;
-		                }
-		            }
-		        } catch (EOFException | ClassNotFoundException eof) {
-		            System.out.println("Identificacion o contraseña incorrecta");
-		        	break;
-		        }
-		    }
-		}catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		for (Empleado e : ListaEmpleados) {
+			if (e.getId() == identificacion && e.getPassword().equals(password)) {
+				System.out.println("Bienvenido, " + e.getNombre());
+	            return e.getCargo();
+	        }else {
+	        System.out.println("Identificación o contraseña incorrecta");
+	        return null;
+	        }
+	    }
+		return null;
 
-		
 	}
+	 static void verEmpleados(){
+		for (Empleado e : ListaEmpleados) {
+	    		System.out.println(e.toString());
+	    	}
+	 }
+	 public static void generarEmpleados(){
+	 try (FileOutputStream FicheroEscritura = new FileOutputStream("EMPLEADOS/empleado.dat");
+             ObjectOutputStream escritura = new ObjectOutputStream(FicheroEscritura)) {
+
+            	            
+            Empleado empleado1 = new Empleado(1452,"Teresa","asb123",Cargo.VENDEDOR);
+            Empleado empleado2 = new Empleado(0234,"Miguel Angel","123qwe",Cargo.VENDEDOR);
+            Empleado empleado3 = new Empleado(7532,"Natalia","xs21qw4", Cargo.GESTOR);
+            
+            ListaEmpleados.add(empleado1);
+            ListaEmpleados.add(empleado2);
+            ListaEmpleados.add(empleado3);
+            
+            escritura.writeObject(ListaEmpleados);
+            
+
+            System.out.println("Objetos escritos correctamente en empleado.dat");
+            
+        } catch (IOException i) {
+            i.printStackTrace();
+        }
+	 }
 }
