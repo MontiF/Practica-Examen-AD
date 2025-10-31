@@ -1,9 +1,25 @@
 package PracticaFinal;
 
-public class Planta {
+import java.io.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+
+public class Planta  implements Serializable{
 	private int codigo;
 	private float precio;
 	private int stock;
+	
+	public Planta(int codigo, float precio, int stock) {
+		super();
+		this.codigo = codigo;
+		this.precio = precio;
+		this.stock = stock;
+	}
+	
 	public int getCodigo() {
 		return codigo;
 	}

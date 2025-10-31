@@ -3,6 +3,15 @@ package PracticaFinal;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 
 public class Main {
@@ -21,15 +30,87 @@ public class Main {
 		}else {
 			System.out.println("Inicio de sesion fallido");
 		}
+		
 	}
 
 	private static void menuVendedor() {
 		Scanner sc = new Scanner(System.in);
-		
+		int eleccion = 0;
+		do {
+		System.out.println("Que desea hacer? \n 1. Visualizar el catalogo de plantas \n 2. Hacer una venta \n 3. Buscar ticket \n 4. Salir");
+		eleccion = sc.nextInt();
+		switch(eleccion) {
+			case 1:
+				visualizarCatalogo();
+				break;
+			case 2:
+				//venderProducto();
+				break;
+			case 3:
+				//buscarTicket();
+				break;
+			case 4:
+				//salir
+			default:
+				//repetir
+				break;
+		}
+		}while(eleccion != 4);
+		sc.close();
 	}
 
+	private static void visualizarCatalogo() {
+		try {
+            FileInputStream fis = new FileInputStream("PLANTAS/plantas.dat");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            System.out.println("Catalogo de plantas");
+            while (true) {
+                try {
+                    Planta planta = (Planta) ois.readObject();
+                    System.out.println(planta);
+                } catch (EOFException e) {
+                    break;
+                }
+            }
+            ois.close();
+            fis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 	private static void menuGestor() {
-		
+		Scanner sc = new Scanner(System.in);
+		int eleccion = 0;
+		do {
+			System.out.println("Que desea hacer? \n 1. Dar de alta una planta \n 2. Dar de baja planta \n 3. Dar de alta un empleado \n 4. Dar de baja un empleado \n 5. Recuperar empelado \n 6. Ver estadisticas de ventas \n 7. Salir");
+			eleccion = sc.nextInt();
+			switch(eleccion) {
+				case 1:
+					//darAltaPlanta();
+					break;
+				case 2:
+					//darBajaPlanta();
+					break;
+				case 3:
+					//darAltaEmpleado();
+					break;
+				case 4:
+					//darBajaEmpleado();
+				case 5: 
+					//recuperarEmpleado();
+				case 6:
+					//verEstadisticas();
+				case 7:
+					//salir
+					break;
+				default:
+					//repetir
+					break;
+			}
+			}while(eleccion != 7);
+		sc.close();
 	}
 
 	public static void crearEstructuraCarpetas() {
@@ -72,16 +153,16 @@ public class Main {
 		File carpetaPlantas = new File("PLANTAS");
 		if(!carpetaPlantas.exists()){
 			if(carpetaPlantas.mkdirs()) {
-				crearPlantasDat();
 				crearPlantasXML();
+				crearPlantasDat();
 				correcto++;
 				correcto++;
 			}else {
 				System.out.println("Carpeta "+carpetaPlantas +" no se pudo crear correctamente.");
 			}
 		}else {
-			crearPlantasDat();
 			crearPlantasXML();
+			crearPlantasDat();
 			correcto++;
 			correcto++;
 		}
@@ -108,20 +189,8 @@ public class Main {
 		cargarEmpleados();
 
 	}
-	public static void crearPlantasDat(){
-		File rutaPlantasDat = new File("PLANTAS/plantas.dat");
-		if(!rutaPlantasDat.exists()) {
-			try {
-				rutaPlantasDat.createNewFile();
-				System.out.println("Planta.dat creado correctamente");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-		}
-	}
 	public static void crearPlantasXML(){
-		File rutaPlantasXML = new File("PLANTAS/planta.xml");
+		File rutaPlantasXML = new File("PLANTAS/plantas.xml");
 		if(!rutaPlantasXML.exists()) {
 			try {
 				rutaPlantasXML.createNewFile();
@@ -158,6 +227,51 @@ public class Main {
 				}
 			}
 		}
+	}
+	public static void crearPlantasDat(){
+		File rutaPlantasDat = new File("PLANTAS/plantas.dat");
+		if(!rutaPlantasDat.exists()) {
+			try {
+				rutaPlantasDat.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.out.println("Plantas.dat no se pudo crear correctamente");
+			}
+		}
+		try {
+            File inputFile = new File("PLANTAS/plantas.xml");
+
+            FileOutputStream fos = new FileOutputStream("PLANTAS/plantas.dat");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(inputFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList nList = doc.getElementsByTagName("planta");
+
+            for (int i = 0; i < nList.getLength(); i++) {
+                Node nNode = nList.item(i);
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eElement = (Element) nNode;
+
+                    int codigo = Integer.parseInt(eElement.getElementsByTagName("codigo").item(0).getTextContent());
+                    float precio = numeroAleatorioPrecio();
+                    int stock = numeroAleatorioStock();
+
+                    Planta planta = new Planta(codigo, precio, stock);
+                    oos.writeObject(planta);
+                }
+            }
+
+            oos.close();
+            fos.close();
+            System.out.println("Plantas.dat generado correctamente");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Plantas.dat no se pudo generar correctamente");
+        }
 	}
 	
 	public static void cargarEmpleados() {
@@ -222,4 +336,14 @@ public class Main {
             i.printStackTrace();
         }
 	 }
+	 public static float numeroAleatorioPrecio() {
+		  
+	        float numero = ThreadLocalRandom.current().nextFloat(1, 500);
+	        return Math.round(numero * 100f) / 100f;
+	    
+	 }
+	 public static int numeroAleatorioStock() {
+	  return ThreadLocalRandom.current().nextInt(1, 501); 
+}
+
 }
