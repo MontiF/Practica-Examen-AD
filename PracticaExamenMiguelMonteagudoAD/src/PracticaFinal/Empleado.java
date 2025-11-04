@@ -16,7 +16,6 @@ public class Empleado implements Serializable {
 	}
 
 	public Empleado(int id, String nombre) {
-		super();
 		this.identificacion = id;
 		this.nombre = nombre;
 	}

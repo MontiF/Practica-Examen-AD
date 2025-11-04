@@ -6,4 +6,10 @@
         <foto>cactus.jpg</foto>
         <descripcion>Planta suculenta del desierto.</descripcion>
     </planta>
+<planta>
+        <codigo>2</codigo>
+        <nombre>Cactus</nombre>
+        <foto>cactus.jpg</foto>
+        <descripcion>Planta suculenta del desierto.</descripcion>
+    </planta>
 </plantas>
