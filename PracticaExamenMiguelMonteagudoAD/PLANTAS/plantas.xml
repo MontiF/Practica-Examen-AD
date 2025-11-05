@@ -8,8 +8,8 @@
     </planta>
 <planta>
         <codigo>2</codigo>
-        <nombre>Cactus</nombre>
-        <foto>cactus.jpg</foto>
-        <descripcion>Planta suculenta del desierto.</descripcion>
+        <nombre>Rosa</nombre>
+        <foto>rosa.jpg</foto>
+        <descripcion>Floricilla de los montes.</descripcion>
     </planta>
 </plantas>
