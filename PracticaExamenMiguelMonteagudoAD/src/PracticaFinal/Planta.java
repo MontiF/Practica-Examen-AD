@@ -42,7 +42,7 @@ public class Planta  implements Serializable{
 	
 	@Override
 	public String toString() {
-		return "Planta [codigo=" + codigo + ", precio=" + precio +"€" +", stock=" + stock + "]";
+		return "Planta [codigo=" + codigo + ", precio=" + precio +"€" +", stock=" + stock ;
 	}
 	
 	
