@@ -39,7 +39,7 @@ public class Main {
 		int eleccion = 0;
 		do {
 			System.out.println(
-					"Que desea hacer? \n 1. Visualizar el catalogo de plantas \n 2. Hacer una venta \n 3. Buscar ticket \n 4. Salir");
+					"Que desea hacer? \n 1. Visualizar el catalogo de plantas \n 2. Gestionar una venta \n 3. Buscar ticket \n 4. Salir");
 			eleccion = sc.nextInt();
 			switch (eleccion) {
 			case 1:
@@ -49,7 +49,7 @@ public class Main {
 				generarVentas(empleadoIniciado);
 				break;
 			case 3:
-				// buscarTicket();
+				buscarTicket();
 				break;
 			case 4:
 				System.out.println("Has salido");
@@ -61,7 +61,39 @@ public class Main {
 		} while (eleccion != 4);
 		sc.close();
 	}
-
+	private static void buscarTicket() {
+		Scanner sc = new Scanner(System.in);
+		int numeroTicket;
+		System.out.println("Que ticket desea devolver(Escribe solo el numero)");
+		if (!sc.hasNextInt()) {
+			System.out.println("Entrada inválida. Debe ser un número.");
+			return;
+		}
+		numeroTicket = sc.nextInt();
+		sc.nextLine();
+		File ticketABuscar = new File("TICKETS/" +String.valueOf(numeroTicket) + ".txt");
+		File ticketABuscarD = new File("DEVOLUCIONES/" +String.valueOf(numeroTicket) + ".txt");
+		File ticketEncontrado;
+		if(!ticketABuscar.exists() || !ticketABuscarD.exists()) {
+			System.out.println("No existe el ticket con número " + numeroTicket);
+		}
+		if(ticketABuscar.exists()) {
+			ticketEncontrado = ticketABuscar;
+		}else {
+			ticketEncontrado = ticketABuscarD;
+		}
+		if (ticketEncontrado != null) {
+			try (BufferedReader br = new BufferedReader(new FileReader(ticketEncontrado))) {
+				String linea;
+				while ((linea = br.readLine()) != null) {
+					System.out.println(linea);
+				}
+				System.out.println("__________________________________________________________________________________");
+			} catch (IOException e) {
+				System.out.println("Error al leer el contenido del ticket: " + e.getMessage());
+			}
+		}
+	}
 	private static void generarVentas(Empleado empleadoIniciado) {
 		Scanner sc = new Scanner(System.in);
 		int eleccion = 0;
@@ -73,7 +105,7 @@ public class Main {
 				vender(empleadoIniciado);
 				break;
 			case 2:
-				// devolver
+				devolver();
 				break;
 			case 3:
 				System.out.println("Has salido");
@@ -87,59 +119,231 @@ public class Main {
 		System.exit(0);
 	}
 
-	private static void vender(Empleado empleadoIniciado) {
-		visualizarCatalogo();
+	private static void devolver() {
 		Scanner sc = new Scanner(System.in);
-		int idEmpleado = empleadoIniciado.getId();
-		String nombreEmpleado = empleadoIniciado.getNombre();
-		LocalDate fecha = LocalDate.now();
-		int numFichero = 1;
-		double total = 0;
-
-		File rutaCarpetaT = new File("TICKETS");
-		File rutaCarpetaD = new File("DEVOLUCIONES");
-
-		numFichero = (rutaCarpetaT.listFiles().length + rutaCarpetaD.listFiles().length) + 1;
-
-		File ticket = new File(rutaCarpetaT, String.valueOf(numFichero) + ".txt");
-		try {
-			ticket.createNewFile();
-		} catch (IOException e) {
-			e.printStackTrace();
+		int numeroTicket;
+		System.out.println("Que ticket desea devolver(Escribe solo el numero)");
+		if (!sc.hasNextInt()) {
+			System.out.println("Entrada inválida. Debe ser un número.");
+			return;
 		}
-		while (true) {
-			System.out.println("Escribe el codigo de la planta que deseas comprar(Pon 0 si no desea comprar más)");
-			int codigoPlanta = sc.nextInt();
-			if (codigoPlanta == 0) {
-				break;
-			}
-			System.out.println("Cuantas unidades desea comprar");
-			int unidadPlanta = sc.nextInt();
-			sc.nextLine();
+		numeroTicket = sc.nextInt();
+		sc.nextLine();
 
-			File plantasDat = new File("PLANTAS/plantas.dat");
+		String nombreTicket = String.valueOf(numeroTicket) + ".txt";
 
-			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(plantasDat))) {
+		File ticketOriginal = new File("TICKETS/"+String.valueOf(numeroTicket) + ".txt");
+		File ticketDevuelto = new File("DEVOLUCIONES/"+String.valueOf(numeroTicket) + ".txt");
 
-				Planta plantaElegida = (Planta) ois.readObject();
-				if (plantaElegida.getCodigo() == codigoPlanta) {
-					if (plantaElegida.getStock() >= unidadPlanta) {
-						total = plantaElegida.getPrecio() * unidadPlanta;
-					} else {
-						System.out.println("No hay stock suficiente");
+		if (!ticketOriginal.exists()) {
+			System.out.println("No existe el ticket con número " + numeroTicket + " en la carpeta TICKETS.");
+			return;
+		}
+
+		if (ticketDevuelto.exists()) {
+			System.out.println("El ticket con número " + numeroTicket + " ya fue devuelto previamente (existe en DEVOLUCIONES).");
+			return;
+		}
+
+		ArrayList<String> lineasTicket = new ArrayList<>();
+		double totalDevolucion = 0.0;
+		ArrayList<ItemDevuelto> itemsDevueltos = new ArrayList<>();
+
+		try (BufferedReader br = new BufferedReader(new FileReader(ticketOriginal))) {
+			String linea;
+		
+			boolean esLineaProducto = false;
+			while ((linea = br.readLine()) != null) {
+				lineasTicket.add(linea);
+
+				if (linea.contains("CodigoProducto") && linea.contains("Cantidad") && linea.contains("PrecioUnitario")) {
+					esLineaProducto = true;
+					continue;
+				}
+				if (linea.contains("__________________________________________________________________________________")) {
+					esLineaProducto = false;
+				}
+
+				if (esLineaProducto) {
+					String[] partes = linea.trim().split("\\s+");
+					
+					if (partes.length >= 3) {
+						try {
+							int codigo = Integer.parseInt(partes[0]);
+							int cantidad = Integer.parseInt(partes[1]);
+							itemsDevueltos.add(new ItemDevuelto(codigo, cantidad));
+						} catch (NumberFormatException ignored) {
+						}
 					}
+				}
+			}
+		} catch (IOException e) {
+			System.out.println("Error al leer el ticket: " + e.getMessage());
+			return;
+		}
+
+		File plantasDat = new File("PLANTAS/plantas.dat");
+		ArrayList<Planta> listaPlantasActualizada = new ArrayList<>();
+
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(plantasDat))) {
+			listaPlantasActualizada = (ArrayList<Planta>) ois.readObject();
+		} catch (Exception e) {
+			System.out.println("Error leyendo las plantas, no se puede actualizar el stock.");
+			return;
+		}
+
+		for (ItemDevuelto item : itemsDevueltos) {
+			for (Planta p : listaPlantasActualizada) {
+				if (p.getCodigo() == item.codigo) {
+					p.setStock(p.getStock() + item.cantidad);
+					System.out.println("✅ Stock actualizado para la planta " + p.getCodigo() + ". Se han devuelto " + item.cantidad + " unidades.");
 					break;
 				}
-			} catch (EOFException e) {
-				System.out.println("No se ha encontrado la planta");
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		}
-		sc.close();
-		System.out.println("Termino la venta");
-		System.exit(0);
+
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(plantasDat))) {
+			oos.writeObject(listaPlantasActualizada);
+		} catch (IOException e) {
+			System.out.println("Error actualizando el archivo de plantas después de la devolución.");
+		}
+		
+		try (FileWriter fw = new FileWriter(ticketDevuelto)) {
+			
+			for (String linea : lineasTicket) {
+			    if (linea.contains("Total:")) {
+			        String totalStr = linea.replaceAll("Total:\\s*", "").replaceAll("€.*", "").trim();
+			        try {
+			            totalDevolucion = Double.parseDouble(totalStr.replace(',', '.'));
+			            fw.write(String.format("Total: %.2f € (DEVUELTO)%n", -totalDevolucion));
+			        } catch (NumberFormatException e) {
+			            fw.write(linea + " (DEVUELTO)\n");
+			        }
+			    } else {
+			        String[] partes = linea.trim().split("\\s+");
+			        if (partes.length >= 3) {
+			            try {
+			                int codigo = Integer.parseInt(partes[0]);
+			                int cantidad = Integer.parseInt(partes[1]);
+			                double precio = Double.parseDouble(partes[2].replace(',', '.'));
+			                
+			                fw.write(String.format("%-15d %-15d %-15.2f%n", codigo, -cantidad, precio));
+			            } catch (NumberFormatException e) {
+			                fw.write(linea + "\n");
+			            }
+			        } else {
+			            fw.write(linea + "\n");
+			        }
+			    }
+			}
+
+		} catch (IOException e) {
+			return;
+		}
+
+		System.out.println("Devolución del ticket " + numeroTicket + " procesada correctamente. Stock actualizado.");
 	}
+
+	private static class ItemDevuelto {
+		int codigo;
+		int cantidad;
+
+		public ItemDevuelto(int codigo, int cantidad) {
+			this.codigo = codigo;
+			this.cantidad = cantidad;
+		}
+	}
+	
+	private static void vender(Empleado empleadoIniciado) {
+	    visualizarCatalogo();
+	    Scanner sc = new Scanner(System.in);
+	    int idEmpleado = empleadoIniciado.getId();
+	    String nombreEmpleado = empleadoIniciado.getNombre();
+	    LocalDate fecha = LocalDate.now();
+	    int numFichero = 1;
+	    double total = 0;
+
+	    File rutaCarpetaT = new File("TICKETS");
+	    File rutaCarpetaD = new File("DEVOLUCIONES");
+
+	    numFichero = (rutaCarpetaT.listFiles().length + rutaCarpetaD.listFiles().length) + 1;
+
+	    File ticket = new File(rutaCarpetaT, String.valueOf(numFichero) + ".txt");
+	    try {
+	        ticket.createNewFile();
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+
+	    File plantasDat = new File("PLANTAS/plantas.dat");
+
+	    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(plantasDat))) {
+	        listaPlantas = (ArrayList<Planta>) ois.readObject();
+	    } catch (Exception e) {
+	        System.out.println("Error leyendo las plantas, lista vacía.");
+	        listaPlantas = new ArrayList<>();
+	    }
+
+	    try (FileWriter fw = new FileWriter(ticket)) {
+	        fw.write("Número Ticket:" + numFichero + "\n");
+	        fw.write("__________________________________________________________________________________\n");
+	        fw.write("Empleado que ha atendido: " + idEmpleado + "\n");
+	        fw.write("Nombre del empleado: " + nombreEmpleado + "\n\n");
+	        fw.write(String.format("%-15s %-15s %-15s%n", "CodigoProducto", "Cantidad", "PrecioUnitario"));
+
+	        while (true) {
+	            System.out.println("Escribe el codigo de la planta que deseas comprar (0 para salir):");
+	            int codigoPlanta = sc.nextInt();
+	            if (codigoPlanta == 0) break;
+
+	            System.out.println("Cuántas unidades desea comprar?");
+	            int unidadPlanta = sc.nextInt();
+	            sc.nextLine();
+
+	            boolean encontrada = false;
+
+	            for (Planta p : listaPlantas) {
+	                if (p.getCodigo() == codigoPlanta) {
+	                    encontrada = true;
+	                    if (p.getStock() >= unidadPlanta) {
+	                        double subtotal = p.getPrecio() * unidadPlanta;
+	                        total += subtotal;
+
+	                        fw.write(String.format("%-15d %-15d %-15.2f%n",
+	                                p.getCodigo(), unidadPlanta, p.getPrecio()));
+
+	                        p.setStock(p.getStock() - unidadPlanta);
+
+	                    } else {
+	                        System.out.println("No hay suficiente stock (" + p.getStock() + ")");
+	                    }
+	                    break;
+	                }
+	            }
+
+	            if (!encontrada) System.out.println("No se ha encontrado la planta");
+	        }
+
+	        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(plantasDat))) {
+	            oos.writeObject(listaPlantas);
+	        } catch (IOException e) {
+	            System.out.println("Error actualizando el archivo de plantas");
+	        }
+
+	        fw.write("__________________________________________________________________________________\n");
+	        fw.write(String.format("Total: %.2f €%n", total));
+
+	        System.out.println("Venta finalizada. Ticket " + ticket.getName() + " generado");
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+
+	    sc.close();
+	    System.out.println("Termino la venta");
+	    System.exit(0);
+	}
+
 
 	private static void visualizarCatalogo() {
 		File plantasDat = new File("PLANTAS/plantas.dat");
@@ -360,56 +564,55 @@ public class Main {
 	}
 
 	private static void crearPlantasDat() {
-		File rutaPlantasDat = new File("PLANTAS/plantas.dat");
-		  if (rutaPlantasDat.exists()) {
-		        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(rutaPlantasDat))) {
-		            listaPlantas = (ArrayList<Planta>) ois.readObject();
-		        } catch (Exception e) {
-		        }
-		    } else {
-		        try {
-		            rutaPlantasDat.createNewFile();
-		        } catch (IOException e) {
-		            e.printStackTrace();
-		        }
-		    }
+	    File rutaPlantasDat = new File("PLANTAS/plantas.dat");
+	    listaPlantas.clear();
 
-		try {
-			File inputFile = new File("PLANTAS/plantas.xml");
+	    if (rutaPlantasDat.exists() && rutaPlantasDat.length() > 0) {
+	        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(rutaPlantasDat))) {
+	            listaPlantas = (ArrayList<Planta>) ois.readObject();
+	        } catch (Exception e) {
+	            System.out.println("⚠️ Error leyendo plantas existentes. Se generarán nuevas.");
+	            listaPlantas = new ArrayList<>();
+	        }
+	    }
 
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(inputFile);
-			doc.getDocumentElement().normalize();
+	    try {
+	        File inputFile = new File("PLANTAS/plantas.xml");
+	        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+	        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	        Document doc = dBuilder.parse(inputFile);
+	        doc.getDocumentElement().normalize();
 
-			NodeList nList = doc.getElementsByTagName("planta");
+	        NodeList nList = doc.getElementsByTagName("planta");
 
-			for (int i = 0; i < nList.getLength(); i++) {
-				Element eElement = (Element) nList.item(i);
-				int codigo = Integer.parseInt(eElement.getElementsByTagName("codigo").item(0).getTextContent());
-				
-				boolean plantaExiste = false;
-	            for (Planta planta : listaPlantas) {
-	                if (planta.getCodigo() == codigo) {
-	                	plantaExiste = true;
+	        for (int i = 0; i < nList.getLength(); i++) {
+	            Element eElement = (Element) nList.item(i);
+	            int codigo = Integer.parseInt(eElement.getElementsByTagName("codigo").item(0).getTextContent());
+
+	            boolean existe = false;
+	            for (Planta p : listaPlantas) {
+	                if (p.getCodigo() == codigo) {
+	                    existe = true;
 	                    break;
 	                }
 	            }
 
-	            if (!plantaExiste) {
+	            if (!existe) {
 	                float precio = numeroAleatorioPrecio();
 	                int stock = numeroAleatorioStock();
 	                listaPlantas.add(new Planta(codigo, precio, stock));
 	            }
-			}
+	        }
 
-			try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(rutaPlantasDat))) {
-				oos.writeObject(listaPlantas);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(rutaPlantasDat))) {
+	            oos.writeObject(listaPlantas);
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 	}
+
 
 	private static void cargarEmpleados() {
 		File rutaEmpleadosDat = new File("EMPLEADOS/empleado.dat");
