@@ -1,0 +1,8 @@
+Número Ticket:3
+__________________________________________________________________________________
+Empleado que ha atendido: 1452
+Nombre del empleado: Teresa
+
+CodigoProducto  Cantidad        PrecioUnitario 
+__________________________________________________________________________________
+Total: 0,00 €
