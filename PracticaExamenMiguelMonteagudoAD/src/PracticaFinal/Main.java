@@ -118,147 +118,137 @@ public class Main {
 				break;
 			}
 		} while (eleccion != 3);
-		sc.close();
-		System.exit(0);
 	}
 
 	private static void devolver() {
-		Scanner sc = new Scanner(System.in);
-		int numeroTicket;
-		System.out.println("Que ticket desea devolver(Escribe solo el numero)");
-		if (!sc.hasNextInt()) {
-			System.out.println("Entrada inválida. Debe ser un número.");
-			return;
-		}
-		numeroTicket = sc.nextInt();
-		sc.nextLine();
+	    Scanner sc = new Scanner(System.in);
+	    int numeroTicket;
+	    System.out.println("Que ticket desea devolver(Escribe solo el numero)");
+	    if (!sc.hasNextInt()) {
+	        System.out.println("Entrada inválida. Debe ser un número.");
+	        return;
+	    }
+	    numeroTicket = sc.nextInt();
+	    sc.nextLine();
 
-		String nombreTicket = String.valueOf(numeroTicket) + ".txt";
+	    File ticketOriginal = new File("TICKETS/" + String.valueOf(numeroTicket) + ".txt");
+	    File ticketDevuelto = new File("DEVOLUCIONES/" + String.valueOf(numeroTicket) + ".txt");
 
-		File ticketOriginal = new File("TICKETS/" + String.valueOf(numeroTicket) + ".txt");
-		File ticketDevuelto = new File("DEVOLUCIONES/" + String.valueOf(numeroTicket) + ".txt");
+	    if (!ticketOriginal.exists()) {
+	        System.out.println("No existe el ticket con número " + numeroTicket + " en la carpeta TICKETS.");
+	        return;
+	    }
 
-		if (!ticketOriginal.exists()) {
-			System.out.println("No existe el ticket con número " + numeroTicket + " en la carpeta TICKETS.");
-			return;
-		}
+	    if (ticketDevuelto.exists()) {
+	        System.out.println("El ticket con número " + numeroTicket + " ya fue devuelto previamente (existe en DEVOLUCIONES).");
+	        return;
+	    }
 
-		if (ticketDevuelto.exists()) {
-			System.out.println(
-					"El ticket con número " + numeroTicket + " ya fue devuelto previamente (existe en DEVOLUCIONES).");
-			return;
-		}
+	    ArrayList<String> lineasTicket = new ArrayList<>();
+	    double totalDevolucion = 0.0;
+	    ArrayList<int[]> itemsDevueltos = new ArrayList<>(); 
 
-		ArrayList<String> lineasTicket = new ArrayList<>();
-		double totalDevolucion = 0.0;
-		ArrayList<ItemDevuelto> itemsDevueltos = new ArrayList<>();
+	    try (BufferedReader br = new BufferedReader(new FileReader(ticketOriginal))) {
+	        String linea;
 
-		try (BufferedReader br = new BufferedReader(new FileReader(ticketOriginal))) {
-			String linea;
+	        boolean esLineaProducto = false;
+	        while ((linea = br.readLine()) != null) {
+	            lineasTicket.add(linea);
 
-			boolean esLineaProducto = false;
-			while ((linea = br.readLine()) != null) {
-				lineasTicket.add(linea);
+	            if (linea.contains("CodigoProducto") && linea.contains("Cantidad")
+	                    && linea.contains("PrecioUnitario")) {
+	                esLineaProducto = true;
+	                continue;
+	            }
+	            if (linea.contains(
+	                    "__________________________________________________________________________________")) {
+	                esLineaProducto = false;
+	            }
 
-				if (linea.contains("CodigoProducto") && linea.contains("Cantidad")
-						&& linea.contains("PrecioUnitario")) {
-					esLineaProducto = true;
-					continue;
-				}
-				if (linea.contains(
-						"__________________________________________________________________________________")) {
-					esLineaProducto = false;
-				}
+	            if (esLineaProducto) {
+	                String[] partes = linea.trim().split("\\s+");
 
-				if (esLineaProducto) {
-					String[] partes = linea.trim().split("\\s+");
+	                if (partes.length >= 3) {
+	                    try {
+	                        int codigo = Integer.parseInt(partes[0]);
+	                        int cantidad = Integer.parseInt(partes[1]);
+	                        itemsDevueltos.add(new int[]{codigo, cantidad}); 
+	                    } catch (NumberFormatException ignored) {
+	                    }
+	                }
+	            }
+	        }
+	    } catch (IOException e) {
+	        System.out.println("Error al leer el ticket: " + e.getMessage());
+	        return;
+	    }
 
-					if (partes.length >= 3) {
-						try {
-							int codigo = Integer.parseInt(partes[0]);
-							int cantidad = Integer.parseInt(partes[1]);
-							itemsDevueltos.add(new ItemDevuelto(codigo, cantidad));
-						} catch (NumberFormatException ignored) {
-						}
-					}
-				}
-			}
-		} catch (IOException e) {
-			System.out.println("Error al leer el ticket: " + e.getMessage());
-			return;
-		}
+	    File plantasDat = new File("PLANTAS/plantas.dat");
+	    ArrayList<Planta> listaPlantasActualizada = new ArrayList<>();
 
-		File plantasDat = new File("PLANTAS/plantas.dat");
-		ArrayList<Planta> listaPlantasActualizada = new ArrayList<>();
+	    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(plantasDat))) {
+	        listaPlantasActualizada = (ArrayList<Planta>) ois.readObject();
+	    } catch (Exception e) {
+	        System.out.println("Error leyendo las plantas.");
+	        return;
+	    }
 
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(plantasDat))) {
-			listaPlantasActualizada = (ArrayList<Planta>) ois.readObject();
-		} catch (Exception e) {
-			System.out.println("Error leyendo las plantas, no se puede actualizar el stock.");
-			return;
-		}
+	    for (int[] item : itemsDevueltos) {
+	        int codigoItem = item[0];    
+	        int cantidadItem = item[1];    
+	        
+	        for (Planta p : listaPlantasActualizada) {
+	            if (p.getCodigo() == codigoItem) {
+	                p.setStock(p.getStock() + cantidadItem);
+	                break;
+	            }
+	        }
+	    }
 
-		for (ItemDevuelto item : itemsDevueltos) {
-			for (Planta p : listaPlantasActualizada) {
-				if (p.getCodigo() == item.codigo) {
-					p.setStock(p.getStock() + item.cantidad);
-					System.out.println("✅ Stock actualizado para la planta " + p.getCodigo() + ". Se han devuelto "
-							+ item.cantidad + " unidades.");
-					break;
-				}
-			}
-		}
+	    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(plantasDat))) {
+	        oos.writeObject(listaPlantasActualizada);
+	    } catch (IOException e) {
+	        System.out.println("Error actualizando el archivo de plantas después de la devolución.");
+	    }
 
-		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(plantasDat))) {
-			oos.writeObject(listaPlantasActualizada);
-		} catch (IOException e) {
-			System.out.println("Error actualizando el archivo de plantas después de la devolución.");
-		}
+	    try (FileWriter fw = new FileWriter(ticketDevuelto)) {
 
-		try (FileWriter fw = new FileWriter(ticketDevuelto)) {
+	        for (String linea : lineasTicket) {
+	            if (linea.contains("Total:")) {
+	                String totalStr = linea.replaceAll("Total:\\s*", "").replaceAll("€.*", "").trim();
+	                try {
+	                    totalDevolucion = Double.parseDouble(totalStr.replace(',', '.'));
+	                    fw.write(String.format("Total: %.2f € (DEVUELTO)%n", -totalDevolucion));
+	                } catch (NumberFormatException e) {
+	                    fw.write(linea + " (DEVUELTO)\n");
+	                }
+	            } else {
+	                String[] partes = linea.trim().split("\\s+");
+	                if (partes.length >= 3) {
+	                    try {
+	                        int codigo = Integer.parseInt(partes[0]);
+	                        int cantidad = Integer.parseInt(partes[1]);
+	                        double precio = Double.parseDouble(partes[2].replace(',', '.'));
 
-			for (String linea : lineasTicket) {
-				if (linea.contains("Total:")) {
-					String totalStr = linea.replaceAll("Total:\\s*", "").replaceAll("€.*", "").trim();
-					try {
-						totalDevolucion = Double.parseDouble(totalStr.replace(',', '.'));
-						fw.write(String.format("Total: %.2f € (DEVUELTO)%n", -totalDevolucion));
-					} catch (NumberFormatException e) {
-						fw.write(linea + " (DEVUELTO)\n");
-					}
-				} else {
-					String[] partes = linea.trim().split("\\s+");
-					if (partes.length >= 3) {
-						try {
-							int codigo = Integer.parseInt(partes[0]);
-							int cantidad = Integer.parseInt(partes[1]);
-							double precio = Double.parseDouble(partes[2].replace(',', '.'));
+	                        fw.write(String.format("%-15d %-15d %-15.2f%n", codigo, cantidad, precio));
+	                    } catch (NumberFormatException e) {
+	                        fw.write(linea + "\n");
+	                    }
+	                } else {
+	                    fw.write(linea + "\n");
+	                }
+	            }
+	        }
 
-							fw.write(String.format("%-15d %-15d %-15.2f%n", codigo, -cantidad, precio));
-						} catch (NumberFormatException e) {
-							fw.write(linea + "\n");
-						}
-					} else {
-						fw.write(linea + "\n");
-					}
-				}
-			}
-
-		} catch (IOException e) {
-			return;
-		}
-
-		System.out.println("Devolución del ticket " + numeroTicket + " procesada correctamente. Stock actualizado.");
-	}
-
-	private static class ItemDevuelto {
-		int codigo;
-		int cantidad;
-
-		public ItemDevuelto(int codigo, int cantidad) {
-			this.codigo = codigo;
-			this.cantidad = cantidad;
-		}
+	    } catch (IOException e) {
+	        System.out.println("Error al escribir el ticket de devolución: " + e.getMessage());
+	        return;
+	    }
+	    
+	    if (!ticketOriginal.delete()) {
+	        System.out.println("No se pudo eliminar el ticket la carpeta TICKETS.");
+	    }
+	    System.out.println("Devolución del ticket " + numeroTicket + " procesada correctamente. Stock actualizado.");
 	}
 
 	private static void vender(Empleado empleadoIniciado) {
@@ -348,9 +338,7 @@ public class Main {
 			e.printStackTrace();
 		}
 
-		sc.close();
 		System.out.println("Termino la venta");
-		System.exit(0);
 	}
 
 	private static void visualizarCatalogo() {
@@ -432,7 +420,7 @@ public class Main {
 			eleccion = sc.nextInt();
 			switch (eleccion) {
 			case 1:
-				// darAltaPlanta();
+				darAltaPlanta();
 				break;
 			case 2:
 				// darBajaPlanta();
@@ -459,7 +447,9 @@ public class Main {
 		} while (eleccion != 7);
 		sc.close();
 	}
-
+	private static void darAltaPlanta() {
+		
+	}
 	private static void crearEstructuraCarpetas() {
 		int correcto = 0;
 		String[] carpetas = { "PLANTAS", "PLANTAS/BAJA", "EMPLEADOS", "EMPLEADOS/BAJA", "TICKETS", "DEVOLUCIONES" };
