@@ -170,9 +170,9 @@ public class Main {
 				}
 
 				if (esLineaProducto) {
-					String[] partes = linea.trim().split("\\s+");
+					String[] partes = linea.trim().split("\\s+"); //cogemos la linea por partes 
 
-					if (partes.length >= 3) {
+					if (partes.length >= 3) {	//si tiene 3 partes cogemos cada una
 						try {
 							int codigo = Integer.parseInt(partes[0]);
 							int cantidad = Integer.parseInt(partes[1]);
@@ -201,7 +201,7 @@ public class Main {
 			int codigoItem = item[0];
 			int cantidadItem = item[1];
 
-			for (Planta p : listaPlantasActualizada) {
+			for (Planta p : listaPlantasActualizada) { //buscamos la planta y le añadaimos el stock
 				if (p.getCodigo() == codigoItem) {
 					p.setStock(p.getStock() + cantidadItem);
 					break;
